@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Kana Practice</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#1a1a2e;--sf:#16213e;--sl:#1f2b4d;--ac:#4fc3f7;--ad:#2ea0c8;--ok:#4caf50;--er:#ef5350;--tx:#e0e0e0;--dm:#9e9e9e;--bd:#37474f}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--tx);min-height:100dvh;overflow-x:hidden}
+.scr{width:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:20px;padding:24px}
+#modeScr{padding-top:18vh}
+.ttl{font-size:36px;font-weight:700;color:var(--ac)}
+.hint{font-size:13px;color:var(--dm)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.mb{padding:12px 20px;border:2px solid var(--bd);border-radius:12px;background:var(--sl);color:var(--tx);font-size:16px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mb:hover{border-color:var(--ac)}.mb.on{border-color:var(--ac);background:#2a4080;color:var(--ac)}
+.sb{padding:16px 48px;border:none;border-radius:12px;background:var(--ac);color:#fff;font-size:18px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sb:hover{background:var(--ad)}.sb.off{opacity:.4;pointer-events:none}
+.pbw{width:100%;height:6px;background:var(--sl);border-radius:3px;overflow:hidden}
+.pb{height:100%;background:var(--ac);transition:width .2s}
+.pt{font-size:14px;color:var(--dm)}
+.chr{font-size:min(180px,28vh);font-weight:700;line-height:1.1;min-height:28vh;display:flex;align-items:center;justify-content:center}
+.iw{width:85%;max-width:360px}
+.inp{width:100%;padding:14px 20px;border:2px solid var(--bd);border-radius:12px;background:var(--sl);color:var(--tx);font-size:20px;text-align:center;outline:none;-webkit-appearance:none;font-family:inherit}
+.inp::placeholder{color:var(--dm)}.inp:focus{border-color:var(--ac)}
+@keyframes shk{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-8px) rotate(-1.5deg)}50%{transform:translateX(8px) rotate(1.5deg)}75%{transform:translateX(-5px) rotate(-.5deg)}}
+.shk{animation:shk .35s;border-color:var(--er)!important;box-shadow:0 0 0 3px rgba(239,83,80,.2)!important}
+@keyframes gf{0%,100%{border-color:var(--bd)!important;background:var(--sl)!important;box-shadow:none!important}50%{border-color:var(--ok)!important;background:rgba(76,175,80,.15)!important;box-shadow:0 0 16px rgba(76,175,80,.4)!important}}
+.gfl{animation:gf .6s ease}
+@keyframes cg{0%,100%{text-shadow:none}50%{color:var(--ok);text-shadow:0 0 24px rgba(76,175,80,.6)}}
+.ck{animation:cg .5s}
+.rbg{padding:8px;background:none;border:none;color:var(--er);font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:none;width:100%;text-align:center}
+.rbg.show{display:block}.rbg:hover{text-decoration:underline}
+.stb{width:100%;padding:8px;background:none;border:none;color:var(--dm);font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sp{width:90%;display:none;flex-direction:column;gap:4px;padding:10px;background:var(--sl);border-radius:10px;align-items:stretch}
+.sp.on{display:flex}
+.sr{display:flex;justify-content:space-between;font-size:13px;color:var(--dm);align-items:center;gap:8px}.sv{color:var(--tx);font-weight:600}
+.mc-row{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0}.mc{padding:2px 8px;background:rgba(239,83,80,.15);border-radius:4px;font-size:13px;color:#ef9a9a}.mc b{font-weight:700}
+.cb{padding:6px 12px;background:rgba(239,83,80,.12);border:1px solid rgba(239,83,80,.3);border-radius:6px;color:#ef9a9a;font-size:12px;cursor:pointer;align-self:center;margin-top:4px}
+.ov{position:fixed;inset:0;background:rgba(10,10,20,.95);z-index:100;display:none;flex-direction:column;padding:16px;overflow-y:auto}
+.ov.on{display:flex}
+.ot{font-size:16px;color:var(--dm);margin-bottom:12px;text-align:center}
+.rc{flex:1;display:flex;flex-direction:column;gap:8px;margin-bottom:16px;overflow-y:auto}
+.rr{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--sf);border-radius:10px}
+.rk{min-width:44px;text-align:center;font-weight:700;font-size:22px;flex-shrink:0}
+.sa{flex:1;display:flex;align-items:center;gap:8px;font-size:14px;min-width:0}
+.wr{color:var(--er);text-decoration:line-through;font-style:italic;flex-shrink:0}.ok{color:var(--ok);font-weight:600;flex-shrink:0}
+.arr{color:var(--dm);flex-shrink:0}
+.ob{padding:10px 20px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap}
+.ob.oi{background:var(--ac);color:#fff}.ob.oi:hover{background:var(--ad)}
+.ob.os{background:var(--sl);color:var(--tx);border:1px solid var(--bd)}
+.ob.od{background:rgba(239,83,80,.15);color:#ef9a9a;border:1px solid rgba(239,83,80,.3)}
+.ao{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:8px 0}
+.hidden{display:none!important}
+.ct{font-size:28px;font-weight:700;color:var(--ok)}.cs{font-size:16px;color:var(--dm);text-align:center;line-height:1.8}
+</style>
+</head>
+<body>
+
+<!-- Mode Select -->
+<div id="modeScr" class="scr">
+  <div class="ttl">仮名練習</div>
+  <div class="hint">Kana Practice</div>
+  <div class="btns" id="modeBtns"></div>
+  <div id="mwHint" class="hint" style="text-align:center;line-height:1.5"></div>
+  <button class="sb off" id="goBtn">Start</button>
+</div>
+
+<!-- Practice -->
+<div id="prScr" class="scr hidden">
+  <div class="pbw"><div class="pb" id="pb"></div></div>
+  <div class="pt" id="pt">0 / 0</div>
+  <div class="chr" id="chr"></div>
+  <div class="iw"><input type="text" class="inp" id="inp" placeholder="type romaji" autocomplete="off" autocorrect="off" enterkeyhint="go"></div>
+  <div class="hint" style="opacity:.4">Space / Enter to submit</div>
+  <button class="rbg" id="rbg">Wrong: <b id="wc">0</b> — tap to review</button>
+  <button class="stb" id="stb">▼ Stats</button>
+  <div class="sp" id="sp"></div>
+</div>
+
+<!-- Review Overlay -->
+<div id="revOv" class="ov">
+  <div class="ot" id="revTitle">Wrong answers</div>
+  <div class="rc" id="rcards"></div>
+  <div class="ao">
+    <button class="ob os" id="closeRev">Close</button>
+    <button class="ob oi" id="retryBtn">Retry <span id="rbc">0</span></button>
+    <button class="ob od" id="newBatchBtn">New Batch</button>
+  </div>
+</div>
+
+<!-- Single Retry Overlay -->
+<div id="retryOv" class="ov">
+  <div class="ot">Retry</div>
+  <div class="chr" id="rChr" style="font-size:min(140px,22vh);min-height:22vh"></div>
+  <div class="iw"><input type="text" class="inp" id="rInp" placeholder="type romaji" autocomplete="off" autocorrect="off" enterkeyhint="go"></div>
+  <div class="hint" style="margin-top:6px;opacity:.4">Space / Enter to submit</div>
+  <div class="ao" style="margin-top:12px">
+    <button class="ob os" id="retryBack">← Back to review</button>
+  </div>
+</div>
+
+<!-- Complete -->
+<div id="doneScr" class="ov" style="background:var(--bg);justify-content:center;align-items:center">
+  <div class="ct">Batch Complete!</div>
+  <div class="cs" id="doneStats"></div>
+  <div class="ao" style="margin-top:16px">
+    <button class="ob oi" id="doneNew">New Batch</button>
+    <button class="ob os" id="doneOk">Done</button>
+  </div>
+</div>
+
+<script>
+// ──────────── DATA ────────────
+// K: map char → {c, r (romaji), s (1=hiragana, 0=katakana), p (priority for sort order)}
+const K={};
+(()=>{let p=0;const add=(c,r,s)=>{const rs=Array.isArray(r)?r:[r];K[c]={c,r:rs,s,p:p++}};
+// a-row
+add('あ','a',1);add('ア','a',0);add('い','i',1);add('イ','i',0);
+add('う','u',1);add('ウ','u',0);add('え','e',1);add('エ','e',0);add('お','o',1);add('オ','o',0);
+// ka-row
+add('か','ka',1);add('カ','ka',0);add('が','ga',1);add('ガ','ga',0);
+add('き','ki',1);add('キ','ki',0);add('ぎ','gi',1);add('ギ','gi',0);
+add('く','ku',1);add('ク','ku',0);add('ぐ','gu',1);add('グ','gu',0);
+add('け','ke',1);add('ケ','ke',0);add('げ','ge',1);add('ゲ','ge',0);
+add('こ','ko',1);add('コ','ko',0);add('ご','go',1);add('ゴ','go',0);
+// sa-row
+add('さ','sa',1);add('サ','sa',0);add('ざ','za',1);add('ザ','za',0);
+add('し','shi',1);add('シ','shi',0);add('じ','ji',1);add('ジ','ji',0);
+add('す','su',1);add('ス','su',0);add('ず','zu',1);add('ズ','zu',0);
+add('せ','se',1);add('セ','se',0);add('ぜ','ze',1);add('ゼ','ze',0);
+add('そ','so',1);add('ソ','so',0);add('ぞ','zo',1);add('ゾ','zo',0);
+// ta-row
+add('た','ta',1);add('タ','ta',0);add('だ','da',1);add('ダ','da',0);
+add('ち','chi',1);add('チ','chi',0);add('ぢ',['ji','zi'],1);add('ヂ',['ji','zi'],0);
+add('つ','tsu',1);add('ツ','tsu',0);add('づ','zu',1);add('ヅ','zu',0);
+add('て','te',1);add('テ','te',0);add('で','de',1);add('デ','de',0);
+add('と','to',1);add('ト','to',0);add('ど','do',1);add('ド','do',0);
+// na-row
+add('な','na',1);add('ナ','na',0);add('に','ni',1);add('ニ','ni',0);
+add('ぬ','nu',1);add('ヌ','nu',0);add('ね','ne',1);add('ネ','ne',0);add('の','no',1);add('ノ','no',0);
+// ha-row
+add('は','ha',1);add('ハ','ha',0);add('ば','ba',1);add('バ','ba',0);add('ぱ','pa',1);add('パ','pa',0);
+add('ひ','hi',1);add('ヒ','hi',0);add('び','bi',1);add('ビ','bi',0);add('ぴ','pi',1);add('ピ','pi',0);
+add('ふ','fu',1);add('フ','fu',0);add('ぶ','bu',1);add('ブ','bu',0);add('ぷ','pu',1);add('プ','pu',0);
+add('へ','he',1);add('ヘ','he',0);add('べ','be',1);add('ベ','be',0);
+add('ほ','ho',1);add('ホ','ho',0);add('ぼ','bo',1);add('ボ','bo',0);add('ぽ','po',1);add('ポ','po',0);
+// ma-row
+add('ま','ma',1);add('マ','ma',0);add('み','mi',1);add('ミ','mi',0);
+add('む','mu',1);add('ム','mu',0);add('め','me',1);add('メ','me',0);add('も','mo',1);add('モ','mo',0);
+// ya-row
+add('や','ya',1);add('ヤ','ya',0);add('ゆ','yu',1);add('ユ','yu',0);add('よ','yo',1);add('ヨ','yo',0);
+// ra-row
+add('ら','ra',1);add('ラ','ra',0);add('り','ri',1);add('リ','ri',0);
+add('る','ru',1);add('ル','ru',0);add('れ','re',1);add('レ','re',0);add('ろ','ro',1);add('ロ','ro',0);
+// wo-row
+add('わ','wa',1);add('ワ','wa',0);add('を','wo',1);add('ヲ','wo',0);add('ん','n',1);add('ン','n',0);
+})();
+const ALL=Object.values(K);
+
+// ──────────── STATE ────────────
+let batch=[],idx=0,curMode=null;
+let wrongSet=new Set(),wrongAns={};
+let streak=0,bestStreak=0;
+let submitting=false;
+
+// ──────────── HELPERS ────────────
+const $=id=>document.getElementById(id);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const primary=k=>Array.isArray(k.r)?k.r[0]:k.r;
+const isCorrect=(k,g)=>{const gg=g.toLowerCase();return Array.isArray(k.r)?k.r.includes(gg):k.r===gg};
+const isSubmitKey=e=>['Enter','Go'].includes(e.key)||['Enter','Space','Go'].includes(e.code)||e.key===' ';
+const isSpaceKey=e=>e.key===' '||e.code==='Space';
+
+// ──────────── LOCAL STORAGE ────────────
+const KEY='kana_wrong';
+function getWrong(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return{}}}
+function setWrong(d){localStorage.setItem(KEY,JSON.stringify(d))}
+function recordWrong(char){const d=getWrong();const e=d[char]||{c:0,t:0};e.c++;e.t=Date.now();d[char]=e;setWrong(d);updateStats()}
+function getTopWrong(limit){const d=getWrong();return Object.entries(d).filter(([,v])=>v.c>=3).sort((a,b)=>b[1].c-a[1].c||b[1].t-a[1].t).slice(0,limit).map(([c])=>K[c]).filter(Boolean).sort((a,b)=>a.p-b.p)}
+
+// ──────────── BATCH LOGIC ────────────
+function buildBatch(m){
+  let arr;
+  if(m==='h')arr=ALL.filter(k=>k.s===1);
+  else if(m==='k')arr=ALL.filter(k=>k.s===0);
+  else if(m==='mw')arr=getTopWrong(20);
+  else arr=[...ALL];
+  return shuffle(arr);
+}
+
+function startPractice(m){
+  const arr=buildBatch(m);
+  if(!arr.length){
+    alert(m==='mw'?'Not enough mistakes yet. Need at least 3 wrong answers per character to appear here.':'');
+    return;
+  }
+  curMode=m;batch=arr;idx=0;wrongSet=new Set();wrongAns={};streak=0;bestStreak=0;
+  $('modeScr').classList.add('hidden');$('prScr').classList.remove('hidden');
+  $('doneScr').classList.remove('on');$('revOv').classList.remove('on');$('retryOv').classList.remove('on');
+  showChar();
+}
+
+// ──────────── PRACTICE ────────────
+function showChar(){
+  if(idx>=batch.length){finishBatch();return}
+  const k=batch[idx];
+  $('chr').textContent=k.c;$('chr').className='chr';
+  const inp=$('inp');inp.value='';inp.className='inp';inp.focus();
+  updateProg();updateBadge();
+}
+
+function updateProg(){$('pb').style.width=(batch.length?idx/batch.length*100:0)+'%';$('pt').textContent=`${idx} / ${batch.length}`}
+function updateBadge(){if(wrongSet.size){$('wc').textContent=wrongSet.size;$('rbg').classList.add('show')}else $('rbg').classList.remove('show')}
+
+function submit(){
+  if(idx>=batch.length)return;
+  if(submitting)return;
+  const k=batch[idx],inp=$('inp'),guess=inp.value.trim();
+  if(!guess)return;
+  submitting=true;
+  if(isCorrect(k,guess)){
+    streak++;if(streak>bestStreak)bestStreak=streak;
+    $('chr').classList.add('ck');inp.classList.add('gfl');
+    setTimeout(()=>{submitting=false;$('chr').className='chr';inp.className='inp';idx++;updateProg();showChar()},550);
+  }else{
+    streak=0;wrongSet.add(k.c);wrongAns[k.c]=guess;recordWrong(k.c);
+    inp.classList.add('shk');setTimeout(()=>{inp.classList.remove('shk');inp.focus();submitting=false},400);inp.select();inp.focus();
+    updateBadge();
+  }
+}
+
+$('inp').addEventListener('keydown',e=>{
+  if(isSubmitKey(e)&&!isSpaceKey(e)){e.preventDefault();submit();}
+});
+$('inp').addEventListener('keyup',e=>{
+  if(isSpaceKey(e)){
+    const inp=$('inp');
+    if(inp.value.endsWith(' '))inp.value=inp.value.slice(0,-1);
+    submit();
+  }
+});
+
+// ──────────── REVIEW ────────────
+function openReview(){
+  if(!wrongSet.size)return;
+  const items=[...wrongSet].map(c=>K[c]).filter(Boolean).sort((a,b)=>a.p-b.p);
+  $('revTitle').textContent=`Wrong answers (${items.length})`;
+  const rc=$('rcards');rc.innerHTML='';
+  items.forEach(k=>{
+    const row=document.createElement('div');row.className='rr';
+    row.innerHTML=`<span class="rk">${k.c}</span>
+      <span class="sa"><span class="wr">${wrongAns[k.c]||'—'}</span><span class="arr">→</span><span class="ok">${primary(k)}</span></span>`;
+    const btn=document.createElement('button');btn.className='ob oi';btn.style.flexShrink='0';btn.textContent='retry';
+    btn.addEventListener('click',()=>openRetry(k.c));row.appendChild(btn);
+    rc.appendChild(row);
+  });
+  $('rbc').textContent=items.length;
+  $('revOv').classList.add('on');
+}
+
+function openRetry(char){
+  const k=K[char];if(!k)return;
+  $('rChr').textContent=k.c;$('rChr').className='chr';
+  const inp=$('rInp');inp.value='';inp.className='inp';
+  $('retryOv').classList.add('on');
+  setTimeout(()=>inp.focus(),80);
+  let busy=false;
+  const doRetry=()=>{
+    if(busy)return;
+    const g=inp.value.trim();if(!g)return;
+    if(isCorrect(k,g)){
+      busy=true;
+      inp.classList.add('gfl');
+      setTimeout(()=>{busy=false;$('retryOv').classList.remove('on');openReview()},500);
+    }else{
+      inp.classList.add('shk');
+      setTimeout(()=>{inp.classList.remove('shk');inp.focus()},400);
+    }
+  };
+  inp.addEventListener('keydown',ev=>{
+    if(isSubmitKey(ev)&&!isSpaceKey(ev)){ev.preventDefault();doRetry()}
+  });
+  inp.addEventListener('keyup',ev=>{
+    if(isSpaceKey(ev)){
+      if(inp.value.endsWith(' '))inp.value=inp.value.slice(0,-1);
+      doRetry();
+    }
+  });
+}
+
+// ──────────── ACTIONS ────────────
+$('rbg').addEventListener('click',openReview);
+$('closeRev').addEventListener('click',()=>$('revOv').classList.remove('on'));
+$('retryBack').addEventListener('click',()=>$('retryOv').classList.remove('on'));
+$('retryBtn').addEventListener('click',()=>{
+  const items=shuffle([...wrongSet].map(c=>K[c]).filter(Boolean));
+  if(!items.length)return;
+  batch=items;idx=0;wrongSet=new Set();wrongAns={};streak=0;bestStreak=0;
+  $('revOv').classList.remove('on');$('retryOv').classList.remove('on');showChar();
+});
+$('newBatchBtn').addEventListener('click',startBatch);
+$('doneNew').addEventListener('click',startBatch);
+$('doneOk').addEventListener('click',()=>{
+  $('doneScr').classList.remove('on');$('prScr').classList.add('hidden');
+  $('modeScr').classList.remove('hidden');updateMwHint();
+});
+
+function startBatch(){$('doneScr').classList.remove('on');startPractice(curMode)}
+function finishBatch(){
+  const t=batch.length,m=wrongSet.size;
+  $('doneStats').innerHTML=`${t-m} / ${t} correct — ${t?Math.round((t-m)/t*100):100}%<br>Best streak: ${bestStreak}`;
+  $('doneScr').classList.add('on');
+}
+
+// ──────────── STATS ────────────
+function updateStats(){
+  const d=getWrong();
+  const total=Object.values(d).reduce((s,v)=>s+v.c,0);
+  const worst=Object.entries(d).sort((a,b)=>b[1].c-a[1].c||b[1].t-a[1].t).slice(0,3);
+  const el=$('sp');el.innerHTML='';
+  const mk=(l,v)=>{const r=document.createElement('div');r.className='sr';r.innerHTML=`<span>${l}</span><span class="sv">${v}</span>`;return r};
+  el.appendChild(mk('Total mistakes',total));
+  if(worst.length){
+    const lbl=document.createElement('div');lbl.className='sr';lbl.innerHTML='<span>Most wrong</span>';el.appendChild(lbl);
+    const row=document.createElement('div');row.className='mc-row';
+    worst.forEach(([ch,v])=>{const m=document.createElement('span');m.className='mc';m.innerHTML=`<b>${ch}</b> ×${v.c}`;row.appendChild(m)});
+    el.appendChild(row);
+  }
+  el.appendChild(mk('Best streak (session)',bestStreak));
+  const btn=document.createElement('button');btn.className='cb';btn.textContent='Reset all data';
+  btn.addEventListener('click',()=>{if(confirm('Reset all mistake data?')){localStorage.removeItem(KEY);updateStats();updateMwHint()}});
+  el.appendChild(btn);
+}
+
+$('stb').addEventListener('click',()=>{
+  const sp=$('sp');sp.classList.toggle('on');
+  $('stb').textContent=sp.classList.contains('on')?'▲ Stats':'▼ Stats';
+});
+
+// ──────────── MODE UI ────────────
+function updateMwHint(){
+  const n=getTopWrong(20).length;
+  const el=$('mwHint');
+  if(n)el.textContent=(n===1?'1 char':n+' chars')+' available in Most Wrong mode';
+  else el.textContent='Need 3+ wrong answers per char to use Most Wrong mode';
+}
+
+const MBS=$('modeBtns');
+['h','k','b','mw'].forEach((id,i)=>{
+  const labels={h:'Hiragana',k:'Katakana',b:'Both',mw:'Most Wrong'};
+  const btn=document.createElement('button');btn.className='mb';btn.textContent=labels[id];btn.dataset.mode=id;
+  btn.addEventListener('click',()=>{
+    [...MBS.children].forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');$('goBtn').classList.remove('off');
+  });
+  MBS.appendChild(btn);
+});
+
+$('goBtn').addEventListener('click',()=>{
+  const btn=document.querySelector('.mb.on');
+  if(btn)startPractice(btn.dataset.mode);
+});
+
+updateMwHint();
+</script>
+</body>
+</html>
