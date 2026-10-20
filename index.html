@@ -159,12 +159,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <!-- Complete -->
-<div id="doneScr" class="ov" style="background:var(--bg);justify-content:center;align-items:center">
-  <div class="ct">Batch Complete!</div>
-  <div class="cs" id="doneStats"></div>
-  <div class="ao" style="margin-top:16px">
-    <button class="ob oi" id="doneNew">New Batch</button>
-    <button class="ob os" id="doneOk">Done</button>
+<div id="doneScr" class="ov" style="background:var(--bg)">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;min-width:0">
+    <div class="ct">Batch Complete!</div>
+    <div class="cs" id="doneStats"></div>
+    <div id="doneWrong" style="width:90%;display:flex;flex-direction:column;gap:8px;margin-top:12px"></div>
+    <div class="ao" style="margin-top:16px">
+      <button class="ob oi" id="doneNew">New Batch</button>
+      <button class="ob os" id="doneReview">Review</button>
+      <button class="ob os" id="doneOk">Done</button>
+    </div>
   </div>
 </div>
 
@@ -309,6 +313,7 @@ let submitting=false;
 let curTab='jp';
 let sessionWrong={};              // char → count, current batch only
 let lastSession=null;             // snapshot {char:count} of the last finished/abandoned session
+let retryRound=false;             // retry rounds are pure practice: no writes to stored data
 
 // ──────────── HELPERS ────────────
 const $=id=>document.getElementById(id);
@@ -317,6 +322,7 @@ const primary=k=>Array.isArray(k.r)?k.r[0]:k.r;
 const isCorrect=(k,g)=>{const gg=g.toLowerCase();return Array.isArray(k.r)?k.r.includes(gg):k.r===gg};
 const isSubmitKey=e=>['Enter','Go'].includes(e.key)||['Enter','Space','Go'].includes(e.code)||e.key===' ';
 const isSpaceKey=e=>e.key===' '||e.code==='Space';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 // ──────────── LOCAL STORAGE ────────────
 const KEY='syllabics_wrong';
@@ -371,6 +377,7 @@ function startPractice(m){
     return;
   }
   curMode=m;curLang=(K[arr[0]]||{}).lang;
+  retryRound=false;
   batch=arr;idx=0;wrongSet=new Set();wrongAns={};sessionWrong={};streak=0;bestStreak=0;
   $('modeScr').classList.add('hidden');$('prScr').classList.remove('hidden');
   $('doneScr').classList.remove('on');$('revOv').classList.remove('on');$('retryOv').classList.remove('on');
@@ -416,7 +423,7 @@ function submit(){
   submitting=true;
   if(isCorrect(k,guess)){
     streak++;if(streak>bestStreak)bestStreak=streak;
-    if(!wrongSet.has(k.c))recordCorrect(k.c);
+    if(!retryRound&&!wrongSet.has(k.c))recordCorrect(k.c);
     $('chr').classList.add('ck');inp.classList.add('gfl');
     setTimeout(()=>{
       submitting=false;
@@ -427,7 +434,7 @@ function submit(){
   }else{
     streak=0;
     wrongSet.add(k.c);wrongAns[k.c]=guess;
-    recordWrong(k.c);
+    if(!retryRound)recordWrong(k.c);
     inp.classList.add('shk');
     setTimeout(()=>{inp.classList.remove('shk');inp.focus();submitting=false},400);
     inp.select();inp.focus();
@@ -452,7 +459,7 @@ function openReview(){
   items.forEach(k=>{
     const row=document.createElement('div');row.className='rr';
     row.innerHTML=`<span class="rk">${k.c}</span>
-      <span class="sa"><span class="wr">${wrongAns[k.c]||'—'}</span><span class="arr">→</span><span class="ok">${primary(k)}</span></span>`;
+      <span class="sa"><span class="wr">${esc(wrongAns[k.c]||'—')}</span><span class="arr">→</span><span class="ok">${primary(k)}</span></span>`;
     const btn=document.createElement('button');btn.className='ob oi';btn.style.flexShrink='0';btn.textContent='retry';
     btn.addEventListener('click',()=>openRetry(k.c));row.appendChild(btn);
     rc.appendChild(row);
@@ -488,12 +495,17 @@ function openRetry(char){
 }
 
 // ──────────── ACTIONS ────────────
-$('rbg').addEventListener('click',openReview);
-$('closeRev').addEventListener('click',()=>$('revOv').classList.remove('on'));
+let reviewFrom='practice';
+$('rbg').addEventListener('click',()=>{reviewFrom='practice';openReview()});
+$('closeRev').addEventListener('click',()=>{
+  $('revOv').classList.remove('on');
+  if(reviewFrom==='done')$('doneScr').classList.add('on');
+});
 $('retryBack').addEventListener('click',()=>$('retryOv').classList.remove('on'));
 $('retryBtn').addEventListener('click',()=>{
   const items=shuffle([...wrongSet].map(c=>K[c]).filter(Boolean));
   if(!items.length)return;
+  retryRound=true;reviewFrom='practice';
   batch=items;idx=0;wrongSet=new Set();wrongAns={};streak=0;bestStreak=0;
   $('revOv').classList.remove('on');$('retryOv').classList.remove('on');showChar();
 });
@@ -507,13 +519,33 @@ $('doneOk').addEventListener('click',()=>{
 
 function startBatch(){$('doneScr').classList.remove('on');startPractice(curMode)}
 function finishBatch(){
-  if(Object.keys(sessionWrong).length)snapshotSession();
+  if(!retryRound&&Object.keys(sessionWrong).length)snapshotSession();
   updateHints();
   const t=batch.length,m=wrongSet.size;
   const lang=curLang==='kr'?'Hangeul':'Kana';
-  $('doneStats').innerHTML=`<strong>${lang}</strong><br>${t-m} / ${t} correct — ${t?Math.round((t-m)/t*100):100}%<br>Best streak: ${bestStreak}`;
+  $('doneStats').innerHTML=`<strong>${lang}</strong>${retryRound?' (retry round)':''}<br>${t-m} / ${t} correct — ${t?Math.round((t-m)/t*100):100}%<br>Best streak: ${bestStreak}`;
+  const dw=$('doneWrong');dw.innerHTML='';
+  if(m){
+    const sorted=[...wrongSet].map(c=>K[c]).filter(Boolean).sort((a,b)=>{
+      const gA=a.g||'x',gB=b.g||'x';
+      const order={'h':0,'k':1,'c':2,'v':3,'s':4,'x':5};
+      if(gA!==gB)return (order[gA]??99)-(order[gB]??99);
+      return a.p-b.p;
+    });
+    const lbl=document.createElement('div');lbl.className='hint';lbl.style.width='100%';lbl.textContent=`Missed (${m})`;dw.appendChild(lbl);
+    sorted.forEach(k=>{
+      const chip=document.createElement('span');chip.className='mc';chip.style.cursor='default';
+      chip.innerHTML=`<b>${k.c}</b> <span class="wr">${esc(wrongAns[k.c]||'—')}</span> → <span class="ok">${primary(k)}</span>`;
+      dw.appendChild(chip);
+    });
+    $('doneReview').style.display='';
+  }else{
+    const lbl=document.createElement('div');lbl.className='hint';lbl.style.width='100%';lbl.textContent='Perfect batch';dw.appendChild(lbl);
+    $('doneReview').style.display='none';
+  }
   $('doneScr').classList.add('on');
 }
+$('doneReview').addEventListener('click',()=>{$('doneScr').classList.remove('on');reviewFrom='done';openReview()});
 
 // ──────────── STATS (session-only) ────────────
 function updateStats(){
@@ -585,7 +617,7 @@ function exitPractice(){
   if(Object.keys(sessionWrong).length){snapshotSession();updateHints();}
   $('doneScr').classList.remove('on');$('revOv').classList.remove('on');$('retryOv').classList.remove('on');
   $('prScr').classList.add('hidden');$('modeScr').classList.remove('hidden');
-  batch=[];idx=0;streak=0;bestStreak=0;
+  batch=[];idx=0;streak=0;bestStreak=0;retryRound=false;
   updateHints();
 }
 $('bmenu').addEventListener('click',()=>{
