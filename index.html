@@ -17,6 +17,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .mb:hover{border-color:var(--ac)}.mb.on{border-color:var(--ac);background:#2a4080;color:var(--ac)}
 .sb{padding:16px 48px;border:none;border-radius:12px;background:var(--ac);color:#fff;font-size:18px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sb:hover{background:var(--ad)}.sb.off{opacity:.4;pointer-events:none}
+.go-wrap{width:100%;display:flex;justify-content:center}
+.bc{width:100%;display:flex;justify-content:flex-start;align-items:center}
+.bb{display:flex;align-items:center;gap:6px;padding:8px 12px;background:none;border:1px solid var(--bd);border-radius:10px;color:var(--dm);font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.bb:hover{border-color:var(--ac);color:var(--ac)}
 .pbw{width:100%;height:6px;background:var(--sl);border-radius:3px;overflow:hidden}
 .pb{height:100%;background:var(--ac);transition:width .2s}
 .pt{font-size:14px;color:var(--dm)}
@@ -64,11 +68,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="hint">Kana Practice</div>
   <div class="btns" id="modeBtns"></div>
   <div id="mwHint" class="hint" style="text-align:center;line-height:1.5"></div>
-  <button class="sb off" id="goBtn">Start</button>
+  <div class="go-wrap"><button class="sb off" id="goBtn">Start</button></div>
 </div>
 
 <!-- Practice -->
 <div id="prScr" class="scr hidden">
+  <div class="bc"><button class="bb" id="bmenu">← Menu</button></div>
   <div class="pbw"><div class="pb" id="pb"></div></div>
   <div class="pt" id="pt">0 / 0</div>
   <div class="chr" id="chr"></div>
@@ -231,16 +236,7 @@ function submit(){
   }
 }
 
-$('inp').addEventListener('keydown',e=>{
-  if(isSubmitKey(e)&&!isSpaceKey(e)){e.preventDefault();submit();}
-});
-$('inp').addEventListener('keyup',e=>{
-  if(isSpaceKey(e)){
-    const inp=$('inp');
-    if(inp.value.endsWith(' '))inp.value=inp.value.slice(0,-1);
-    submit();
-  }
-});
+$('inp').addEventListener('keydown',e=>{if(isSpaceKey(e)||isSubmitKey(e)){e.preventDefault();submit()}});
 
 // ──────────── REVIEW ────────────
 function openReview(){
@@ -279,15 +275,9 @@ function openRetry(char){
       setTimeout(()=>{inp.classList.remove('shk');inp.focus()},400);
     }
   };
-  inp.addEventListener('keydown',ev=>{
-    if(isSubmitKey(ev)&&!isSpaceKey(ev)){ev.preventDefault();doRetry()}
-  });
-  inp.addEventListener('keyup',ev=>{
-    if(isSpaceKey(ev)){
-      if(inp.value.endsWith(' '))inp.value=inp.value.slice(0,-1);
-      doRetry();
-    }
-  });
+  if(inp._onKeyDown)inp.removeEventListener('keydown',inp._onKeyDown);
+  inp._onKeyDown=ev=>{if(isSpaceKey(ev)||isSubmitKey(ev)){ev.preventDefault();doRetry()}};
+  inp.addEventListener('keydown',inp._onKeyDown);
 }
 
 // ──────────── ACTIONS ────────────
@@ -337,6 +327,23 @@ function updateStats(){
 $('stb').addEventListener('click',()=>{
   const sp=$('sp');sp.classList.toggle('on');
   $('stb').textContent=sp.classList.contains('on')?'▲ Stats':'▼ Stats';
+});
+
+// ──────────── BACK / EXIT ────────────
+const practiceActive=()=>$('prScr')&&!$('prScr').classList.contains('hidden');
+function exitPractice(){
+  $('doneScr').classList.remove('on');$('revOv').classList.remove('on');$('retryOv').classList.remove('on');
+  $('prScr').classList.add('hidden');$('modeScr').classList.remove('hidden');
+  batch=[];idx=0;streak=0;bestStreak=0;
+  updateMwHint();
+}
+$('bmenu').addEventListener('click',()=>{
+  if(!practiceActive()){exitPractice();return}
+  if(idx<batch.length&&confirm('Leave practice? This batch is not saved (mistakes are still recorded).'))exitPractice();
+});
+window.addEventListener('beforeunload',e=>{
+  if(!practiceActive()||idx>=batch.length)return;
+  e.preventDefault();e.returnValue='';
 });
 
 // ──────────── MODE UI ────────────
