@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Kana &amp; Hangul Practice</title>
+<title>Kana & Hangul Practice</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#1a1a2e;--sf:#16213e;--sl:#1f2b4d;--ac:#4fc3f7;--ad:#2ea0c8;--ok:#4caf50;--er:#ef5350;--tx:#e0e0e0;--dm:#9e9e9e;--bd:#37474f}
@@ -26,6 +26,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .bc{width:100%;display:flex;justify-content:flex-start;align-items:center}
 .bb{display:flex;align-items:center;gap:6px;padding:8px 12px;background:none;border:1px solid var(--bd);border-radius:10px;color:var(--dm);font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .bb:hover{border-color:var(--ac);color:var(--ac)}
+.mwprev{width:100%;display:none;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;padding:10px;background:var(--sf);border:1px solid var(--bd);border-radius:10px}
+.mwprev.on{display:flex}
+.mwprev .mc{cursor:default}
+.mwprev .note{font-size:12px;color:var(--dm);width:100%;text-align:center}
 .pbw{width:100%;height:6px;background:var(--sl);border-radius:3px;overflow:hidden}
 .pb{height:100%;background:var(--ac);transition:width .2s}
 .pt{font-size:14px;color:var(--dm)}
@@ -52,6 +56,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .sr{display:flex;justify-content:space-between;font-size:13px;color:var(--dm);align-items:center;gap:8px}.sv{color:var(--tx);font-weight:600}
 .mc-row{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0}.mc{padding:2px 8px;background:rgba(239,83,80,.15);border-radius:4px;font-size:13px;color:#ef9a9a}.mc b{font-weight:700}
 .cb{padding:6px 12px;background:rgba(239,83,80,.12);border:1px solid rgba(239,83,80,.3);border-radius:6px;color:#ef9a9a;font-size:12px;cursor:pointer;align-self:center;margin-top:4px}
+.wcb{width:100%;padding:8px;background:none;border:none;color:var(--dm);font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.wcb:hover{color:var(--tx)}
+.wp{width:100%;display:none;flex-direction:column;gap:10px;padding:12px;background:var(--sf);border:1px solid var(--bd);border-radius:10px}
+.wp.on{display:flex}
+.seg{display:flex;gap:6px;justify-content:center}
+.seg button{flex:1;padding:8px;background:var(--sl);border:1px solid var(--bd);border-radius:8px;color:var(--dm);font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.seg button.on{border-color:var(--ac);color:var(--ac);background:rgba(79,195,247,.08)}
+.wsec{display:flex;flex-direction:column;gap:5px}
+.wsec .sl{font-size:12px;font-weight:600;color:var(--dm);letter-spacing:.03em}
+.wsec .lst{display:flex;gap:6px;flex-wrap:wrap}
+.wsec .lst .mc{cursor:pointer}
+.wsec .lst .mc:hover{border-color:var(--ac)}
+.wsec .none{font-size:12px;color:var(--dm)}
 .ov{position:fixed;inset:0;background:rgba(10,10,20,.95);z-index:100;display:none;flex-direction:column;padding:16px;overflow-y:auto}
 .ov.on{display:flex}
 .ot{font-size:16px;color:var(--dm);margin-bottom:12px;text-align:center}
@@ -74,18 +91,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <!-- Mode Select -->
 <div id="modeScr" class="scr">
-  <div class="ttl" id="ttl">Kana &amp; Hangul Practice</div>
+  <div class="ttl" id="ttl">Kana & Hangul Practice</div>
   <div class="tabs" id="tabs">
     <button class="tab on" data-lang="jp">Japanese</button>
     <button class="tab" data-lang="kr">Korean</button>
   </div>
   <div id="jpPane">
     <div class="btns" id="jpBtns"></div>
+    <div class="mwprev" id="jpMwPrev"></div>
     <div class="go-wrap" style="margin-top:16px"><button class="sb go off" data-lang="jp">Start</button></div>
   </div>
   <div id="krPane" class="hidden">
     <div class="btns" id="krBtns"></div>
+    <div class="mwprev" id="krMwPrev"></div>
     <div class="go-wrap" style="margin-top:16px"><button class="sb go off" data-lang="kr">Start</button></div>
+  </div>
+  <button class="wcb" id="wcb">✗ Wrong chars</button>
+  <div class="wp" id="wp">
+    <div class="seg" id="wseg">
+      <button data-view="all" class="on">All-time</button>
+      <button data-view="last">Last session</button>
+    </div>
+    <div id="wlist" style="display:flex;flex-direction:column;gap:12px"></div>
+    <button class="cb" id="wreset" style="align-self:center">Reset all data</button>
   </div>
 </div>
 
@@ -98,7 +126,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="chr" id="chr"></div>
     <button class="lsb off" id="lsb" aria-label="Listen">🔊</button>
   </div>
-  <div class="iw"><input type="text" class="inp" id="inp" placeholder="type romaji" autocomplete="off" autocorrect="off" enterkeyhint="go"></div>
+  <div class="iw"><input type="text" class="inp" id="inp" placeholder="type romanization" autocomplete="off" autocorrect="off" enterkeyhint="go"></div>
   <div class="hint" style="opacity:.4">Space / Enter to submit</div>
   <button class="rbg" id="rbg">Wrong: <b id="wc">0</b> — tap to review</button>
   <button class="stb" id="stb">▼ Stats</button>
@@ -109,7 +137,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div id="revOv" class="ov">
   <div class="ot" id="revTitle">Wrong answers</div>
   <div class="rc" id="rcards"></div>
-  <div class="ao">
+  <div class="ao" style="align-items:center">
     <button class="ob os" id="closeRev">Close</button>
     <button class="ob oi" id="retryBtn">Retry <span id="rbc">0</span></button>
     <button class="ob od" id="newBatchBtn">New Batch</button>
@@ -123,7 +151,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="chr" id="rChr" style="font-size:min(140px,22vh);min-height:22vh"></div>
     <button class="lsb" id="rLsb" aria-label="Listen">🔊</button>
   </div>
-  <div class="iw"><input type="text" class="inp" id="rInp" placeholder="type romaji" autocomplete="off" autocorrect="off" enterkeyhint="go"></div>
+  <div class="iw"><input type="text" class="inp" id="rInp" placeholder="type romanization" autocomplete="off" autocorrect="off" enterkeyhint="go"></div>
   <div class="hint" style="margin-top:6px;opacity:.4">Space / Enter to submit</div>
   <div class="ao" style="margin-top:12px">
     <button class="ob os" id="retryBack">← Back to review</button>
@@ -151,9 +179,10 @@ function add(c,r,s,g='x',sp=null,lang='jp'){
   const rs=Array.isArray(r)?r:[r];
   K[c]={c,r:rs,s,p:p++,g,sp,lang};
 }
-// a-row
+
 // ── KANA ──
 (()=>{
+  // a-row
   add('あ','a',1);add('ア','a',0);add('い','i',1);add('イ','i',0);
   add('う','u',1);add('ウ','u',0);add('え','e',1);add('エ','e',0);add('お','o',1);add('オ','o',0);
   // ka-row
@@ -193,10 +222,8 @@ function add(c,r,s,g='x',sp=null,lang='jp'){
   add('る','ru',1);add('ル','ru',0);add('れ','re',1);add('レ','re',0);add('ろ','ro',1);add('ロ','ro',0);
   // wo-row
   add('わ','wa',1);add('ワ','wa',0);add('を','wo',1);add('ヲ','wo',0);add('ん','n',1);add('ン','n',0);
-
 })();
 
-;
 // ── HANGUL ──
 (()=>{
   // Consonant jamo (initial position) — accept by jamo NAME romanization
@@ -271,7 +298,7 @@ function add(c,r,s,g='x',sp=null,lang='jp'){
     ['효',['hyo']], ['후',['hu']], ['휴',['hyu']], ['흐',['heu']], ['히',['hi']],
   ];
   SYL.forEach(([c,accents])=>add(c,accents,2,'s',c,'kr'));
-})()
+})();
 const ALL=Object.values(K);
 
 // ──────────── STATE ────────────
@@ -280,6 +307,8 @@ let wrongSet=new Set(),wrongAns={};
 let streak=0,bestStreak=0;
 let submitting=false;
 let curTab='jp';
+let sessionWrong={};              // char → count, current batch only
+let lastSession=null;             // snapshot {char:count} of the last finished/abandoned session
 
 // ──────────── HELPERS ────────────
 const $=id=>document.getElementById(id);
@@ -291,18 +320,33 @@ const isSpaceKey=e=>e.key===' '||e.code==='Space';
 
 // ──────────── LOCAL STORAGE ────────────
 const KEY='syllabics_wrong';
+const LAST_KEY='syllabics_last_session';
 function getWrong(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return{}}}
 function setWrong(d){localStorage.setItem(KEY,JSON.stringify(d))}
-function recordWrong(char){const d=getWrong();const e=d[char]||{c:0,t:0};e.c++;e.t=Date.now();d[char]=e;setWrong(d);updateStats()}
-function getTopWrong(limit,lang){
+// e = {c (all-time miss count), t (last miss), w (Most-Wrong weight; w-1 on first-try correct)}
+function recordWrong(char){const d=getWrong();const e=d[char]||{c:0,t:0};e.c++;e.w=(e.w!=null?e.w:e.c-1)+1;e.t=Date.now();d[char]=e;setWrong(d);sessionWrong[char]=(sessionWrong[char]||0)+1;updateStats()}
+function recordCorrect(char){const d=getWrong();const e=d[char];if(!e)return;e.w=Math.max(0,(e.w!=null?e.w:e.c)-1);setWrong(d)}
+function getLastSession(){try{return JSON.parse(localStorage.getItem(LAST_KEY))||null}catch{return null}}
+function setLastSession(d){localStorage.setItem(LAST_KEY,JSON.stringify(d))}
+function snapshotSession(){setLastSession(sessionWrong);lastSession={...sessionWrong}}
+function topWrongInfo(limit,lang){
+  const W=e=>e.w!=null?e.w:e.c;              // old entries (no w) fall back to c
   const d=getWrong();
-  return Object.entries(d)
-    .filter(([c,v])=>K[c]&&v.c>=3&&(lang?K[c].lang===lang:true))
-    .sort((a,b)=>b[1].c-a[1].c||b[1].t-a[1].t)
-    .slice(0,limit)
-    .map(([c])=>K[c])
-    .filter(Boolean)
-    .sort((a,b)=>{const gA=a.g||'x',gB=b.g||'x';const order={'h':0,'k':1,'c':2,'v':3,'s':4,'x':5};if(gA!==gB)return (order[gA]??99)-(order[gB]??99);return a.p-b.p;});
+  const qual=Object.entries(d)
+    .filter(([c,v])=>K[c]&&W(v)>=3&&(lang?K[c].lang===lang:true))
+    .sort((a,b)=>W(b[1])-W(a[1])||b[1].t-a[1].t);
+  return {items:qual.slice(0,limit).map(([c])=>K[c]),total:qual.length};
+}
+function getTopWrong(limit,lang){
+  return topWrongInfo(limit,lang).items.sort((a,b)=>{
+    // Sort by group first, then by original priority
+    const gA=a.g||'x',gB=b.g||'x';
+    if(gA!==gB){
+      const order={'h':0,'k':1,'c':2,'v':3,'s':4,'x':5};
+      return (order[gA]??99)-(order[gB]??99);
+    }
+    return a.p-b.p;
+  });
 }
 
 // ──────────── BATCH LOGIC ────────────
@@ -327,9 +371,10 @@ function startPractice(m){
     return;
   }
   curMode=m;curLang=(K[arr[0]]||{}).lang;
-  batch=arr;idx=0;wrongSet=new Set();wrongAns={};streak=0;bestStreak=0;
+  batch=arr;idx=0;wrongSet=new Set();wrongAns={};sessionWrong={};streak=0;bestStreak=0;
   $('modeScr').classList.add('hidden');$('prScr').classList.remove('hidden');
   $('doneScr').classList.remove('on');$('revOv').classList.remove('on');$('retryOv').classList.remove('on');
+  updateStats();
   showChar();
 }
 
@@ -371,11 +416,21 @@ function submit(){
   submitting=true;
   if(isCorrect(k,guess)){
     streak++;if(streak>bestStreak)bestStreak=streak;
+    if(!wrongSet.has(k.c))recordCorrect(k.c);
     $('chr').classList.add('ck');inp.classList.add('gfl');
-    setTimeout(()=>{submitting=false;$('chr').className='chr';inp.className='inp';idx++;updateProg();showChar()},550);
+    setTimeout(()=>{
+      submitting=false;
+      $('chr').classList.remove('ck');
+      inp.classList.remove('gfl');
+      idx++;updateProg();showChar();
+    },550);
   }else{
-    streak=0;wrongSet.add(k.c);wrongAns[k.c]=guess;recordWrong(k.c);
-    inp.classList.add('shk');setTimeout(()=>{inp.classList.remove('shk');inp.focus();submitting=false},400);inp.select();inp.focus();
+    streak=0;
+    wrongSet.add(k.c);wrongAns[k.c]=guess;
+    recordWrong(k.c);
+    inp.classList.add('shk');
+    setTimeout(()=>{inp.classList.remove('shk');inp.focus();submitting=false},400);
+    inp.select();inp.focus();
     updateBadge();
   }
 }
@@ -386,7 +441,12 @@ $('lsb').addEventListener('click',()=>{const k=batch[idx];if(k)speak(k)});
 // ──────────── REVIEW ────────────
 function openReview(){
   if(!wrongSet.size)return;
-  const items=[...wrongSet].map(c=>K[c]).filter(Boolean).sort((a,b)=>a.p-b.p);
+  const items=[...wrongSet].map(c=>K[c]).filter(Boolean).sort((a,b)=>{
+    const gA=a.g||'x',gB=b.g||'x';
+    const order={'h':0,'k':1,'c':2,'v':3,'s':4,'x':5};
+    if(gA!==gB)return (order[gA]??99)-(order[gB]??99);
+    return a.p-b.p;
+  });
   $('revTitle').textContent=`Wrong answers (${items.length})`;
   const rc=$('rcards');rc.innerHTML='';
   items.forEach(k=>{
@@ -404,10 +464,9 @@ function openReview(){
 function openRetry(char){
   const k=K[char];if(!k)return;
   $('rChr').textContent=k.c;$('rChr').className='chr';
-  PLACEHOLDER
+  $('rLsb').classList.toggle('off',k.lang!=='kr');
+  $('rLsb').onclick=()=>speak(k);
   const inp=$('rInp');inp.value='';inp.className='inp';
-  $('retryOv').classList.add('on');
-  setTimeout(()=>inp.focus(),80);
   let busy=false;
   const doRetry=()=>{
     if(busy)return;
@@ -415,7 +474,7 @@ function openRetry(char){
     if(isCorrect(k,g)){
       busy=true;
       inp.classList.add('gfl');
-      setTimeout(()=>{busy=false;$('retryOv').classList.remove('on');openReview()},500);
+      setTimeout(()=>{busy=false;inp.classList.remove('gfl');$('retryOv').classList.remove('on');openReview()},500);
     }else{
       inp.classList.add('shk');
       setTimeout(()=>{inp.classList.remove('shk');inp.focus()},400);
@@ -424,6 +483,8 @@ function openRetry(char){
   if(inp._onKeyDown)inp.removeEventListener('keydown',inp._onKeyDown);
   inp._onKeyDown=ev=>{if(isSpaceKey(ev)||isSubmitKey(ev)){ev.preventDefault();doRetry()}};
   inp.addEventListener('keydown',inp._onKeyDown);
+  $('retryOv').classList.add('on');
+  setTimeout(()=>inp.focus(),80);
 }
 
 // ──────────── ACTIONS ────────────
@@ -441,46 +502,91 @@ $('doneNew').addEventListener('click',startBatch);
 $('doneOk').addEventListener('click',()=>{
   $('doneScr').classList.remove('on');$('prScr').classList.add('hidden');
   $('modeScr').classList.remove('hidden');
+  updateHints();
 });
 
 function startBatch(){$('doneScr').classList.remove('on');startPractice(curMode)}
 function finishBatch(){
+  if(Object.keys(sessionWrong).length)snapshotSession();
+  updateHints();
   const t=batch.length,m=wrongSet.size;
-  $('doneStats').innerHTML=`${t-m} / ${t} correct — ${t?Math.round((t-m)/t*100):100}%<br>Best streak: ${bestStreak}`;
+  const lang=curLang==='kr'?'Hangeul':'Kana';
+  $('doneStats').innerHTML=`<strong>${lang}</strong><br>${t-m} / ${t} correct — ${t?Math.round((t-m)/t*100):100}%<br>Best streak: ${bestStreak}`;
   $('doneScr').classList.add('on');
 }
 
-// ──────────── STATS ────────────
+// ──────────── STATS (session-only) ────────────
 function updateStats(){
-  const d=getWrong();
-  const total=Object.values(d).reduce((s,v)=>s+v.c,0);
-  const worst=Object.entries(d).sort((a,b)=>b[1].c-a[1].c||b[1].t-a[1].t).slice(0,3);
+  const byLang=l=>Object.entries(sessionWrong).filter(([c])=>K[c]&&K[c].lang===l)
+    .sort((a,b)=>b[1]-a[1]).map(([c,n])=>[c,n]).slice(0,3);
+  const sessTotal=Object.values(sessionWrong).reduce((s,n)=>s+n,0);
   const el=$('sp');el.innerHTML='';
   const mk=(l,v)=>{const r=document.createElement('div');r.className='sr';r.innerHTML=`<span>${l}</span><span class="sv">${v}</span>`;return r};
-  el.appendChild(mk('Total mistakes',total));
-  if(worst.length){
-    const lbl=document.createElement('div');lbl.className='sr';lbl.innerHTML='<span>Most wrong</span>';el.appendChild(lbl);
-    const row=document.createElement('div');row.className='mc-row';
-    worst.forEach(([ch,v])=>{const m=document.createElement('span');m.className='mc';m.innerHTML=`<b>${ch}</b> ×${v.c}`;row.appendChild(m)});
-    el.appendChild(row);
-  }
+  el.appendChild(mk('Session mistakes',sessTotal));
+  ['jp','kr'].forEach(l=>{
+    const worst=byLang(l);
+    if(worst.length){
+      const row=document.createElement('div');row.className='mc-row';
+      row.style.borderLeft='2px solid var(--bd)';
+      worst.forEach(([ch,n])=>{const m=document.createElement('span');m.className='mc';m.innerHTML=`<b>${ch}</b> ×${n}`;row.appendChild(m)});
+      el.appendChild(row);
+    }
+  });
   el.appendChild(mk('Best streak (session)',bestStreak));
-  const btn=document.createElement('button');btn.className='cb';btn.textContent='Reset all data';
-  btn.addEventListener('click',()=>{if(confirm('Reset all mistake data?')){localStorage.removeItem(KEY);updateStats()}});
-  el.appendChild(btn);
 }
 
 $('stb').addEventListener('click',()=>{
   const sp=$('sp');sp.classList.toggle('on');
   $('stb').textContent=sp.classList.contains('on')?'▲ Stats':'▼ Stats';
+  if(sp.classList.contains('on'))updateStats();
+});
+
+// ──────────── WRONG CHARS (menu) ────────────
+let wrongView='all';
+function renderWrongList(){
+  const src=wrongView==='all'?getWrong():(lastSession||{});
+  // normalize to {char:count}
+  const norm={};
+  Object.entries(src).forEach(([c,v])=>{norm[c]=(v&&v.c!=null)?v.c:v});
+  const build=(label,lang)=>{
+    const sec=document.createElement('div');sec.className='wsec';
+    const items=Object.entries(norm).filter(([c])=>K[c]&&K[c].lang===lang)
+      .sort((a,b)=>(b[1]-a[1])||(K[a[0]].p-K[b[0]].p));
+    const sl=document.createElement('div');sl.className='sl';sl.textContent=label;sec.appendChild(sl);
+    if(!items.length){const n=document.createElement('div');n.className='none';n.textContent='none';sec.appendChild(n);return sec}
+    const lst=document.createElement('div');lst.className='lst';
+    items.forEach(([c,n])=>{const m=document.createElement('span');m.className='mc';m.innerHTML=`<b>${c}</b> ×${n}`;lst.appendChild(m)});
+    sec.appendChild(lst);
+    return sec;
+  };
+  const box=$('wlist');box.innerHTML='';
+  box.appendChild(build('Kana','jp'));
+  box.appendChild(build('Hangeul','kr'));
+}
+function setWrongView(v){
+  wrongView=v;
+  [...$('wseg').children].forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+  renderWrongList();
+}
+$('wcb').addEventListener('click',()=>{
+  const wp=$('wp');wp.classList.toggle('on');
+  if(wp.classList.contains('on'))renderWrongList();
+});
+$('wseg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setWrongView(b.dataset.view)});
+$('wreset').addEventListener('click',()=>{
+  if(!confirm('Reset all mistake data (all-time)?'))return;
+  localStorage.removeItem(KEY);localStorage.removeItem(LAST_KEY);
+  lastSession=null;updateHints();renderWrongList();
 });
 
 // ──────────── BACK / EXIT ────────────
 const practiceActive=()=>$('prScr')&&!$('prScr').classList.contains('hidden');
 function exitPractice(){
+  if(Object.keys(sessionWrong).length){snapshotSession();updateHints();}
   $('doneScr').classList.remove('on');$('revOv').classList.remove('on');$('retryOv').classList.remove('on');
   $('prScr').classList.add('hidden');$('modeScr').classList.remove('hidden');
   batch=[];idx=0;streak=0;bestStreak=0;
+  updateHints();
 }
 $('bmenu').addEventListener('click',()=>{
   if(!practiceActive()){exitPractice();return}
@@ -490,8 +596,37 @@ window.addEventListener('beforeunload',e=>{
   if(!practiceActive()||idx>=batch.length)return;
   e.preventDefault();e.returnValue='';
 });
+lastSession=getLastSession();
 
 // ──────────── TAB / MODE UI ────────────
+function renderMwPreview(lang){
+  const box=$(lang+'MwPrev');if(!box)return;
+  const info=topWrongInfo(20,lang);
+  const items=info.items;
+  box.innerHTML='';
+  if(!items.length){
+    const n=document.createElement('span');n.className='note';
+    n.textContent='No characters selected. A character is added after 3 wrong answers.';
+    box.appendChild(n);return;
+  }
+  const note=document.createElement('span');note.className='note';
+  note.textContent=info.total>20?`20 of ${info.total} characters selected (most missed first)`:`${items.length===1?'1 character':items.length+' characters'} selected (3+ wrong answers each)`;
+  box.appendChild(note);
+  items.forEach(k=>{
+    const m=document.createElement('span');m.className='mc';
+    m.innerHTML=`<b>${k.c}</b> ×${(getWrong()[k.c]||{c:0}).c}`;
+    m.title=primary(k);
+    box.appendChild(m);
+  });
+}
+function syncMwPreviews(){
+  if($('jpBtns').querySelector('.mb.on')?.dataset.mode==='mw')renderMwPreview('jp');
+  if($('krBtns').querySelector('.mb.on')?.dataset.mode==='mw')renderMwPreview('kr');
+}
+function updateHints(){
+  syncMwPreviews();
+}
+
 const JP_MODES=[
   {id:'h',label:'Hiragana'},
   {id:'k',label:'Katakana'},
@@ -507,6 +642,7 @@ const KR_MODES=[
 
 function buildModeBtns(container,modes,lang){
   container.innerHTML='';
+  const prev=$(lang+'MwPrev');
   modes.forEach(m=>{
     const btn=document.createElement('button');
     btn.className='mb';btn.textContent=m.label;
@@ -516,6 +652,10 @@ function buildModeBtns(container,modes,lang){
       btn.classList.add('on');
       const go=container.parentElement.querySelector('.go');
       if(go)go.classList.remove('off');
+      if(prev){
+        if(m.id==='mw'){renderMwPreview(lang);prev.classList.add('on');}
+        else prev.classList.remove('on');
+      }
     });
     container.appendChild(btn);
   });
@@ -531,14 +671,17 @@ $('tabs').addEventListener('click',e=>{
   [...$('tabs').children].forEach(x=>x.classList.toggle('on',x===t));
   $('jpPane').classList.toggle('hidden',lang!=='jp');
   $('krPane').classList.toggle('hidden',lang!=='kr');
+  // Reset "on" states to avoid double "on"
 });
 
 document.querySelectorAll('.go').forEach(go=>{
   go.addEventListener('click',()=>{
     const lang=go.dataset.lang;
+    // Find the currently-on mode button in that pane
     const pane=lang==='jp'?$('jpPane'):$('krPane');
     const on=pane.querySelector('.mb.on');
     if(!on){
+      // No mode selected — flash the button row
       pane.querySelector('.btns').animate(
         [{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],
         {duration:300}
@@ -550,6 +693,7 @@ document.querySelectorAll('.go').forEach(go=>{
   });
 });
 
+updateHints();
 if ('speechSynthesis' in window) {
   const _ = speechSynthesis.getVoices();
   speechSynthesis.addEventListener('voiceschanged', ()=>speechSynthesis.getVoices());
