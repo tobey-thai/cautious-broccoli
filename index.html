@@ -3,18 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Kana Practice</title>
+<title>Kana &amp; Hangul Practice</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#1a1a2e;--sf:#16213e;--sl:#1f2b4d;--ac:#4fc3f7;--ad:#2ea0c8;--ok:#4caf50;--er:#ef5350;--tx:#e0e0e0;--dm:#9e9e9e;--bd:#37474f}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--tx);min-height:100dvh;overflow-x:hidden}
 .scr{width:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:20px;padding:24px}
-#modeScr{padding-top:18vh}
+#modeScr{padding-top:8vh}
 .ttl{font-size:36px;font-weight:700;color:var(--ac)}
 .hint{font-size:13px;color:var(--dm)}
+.tabs{display:flex;gap:8px;margin-bottom:8px}
+.tab{flex:1;padding:12px 8px;background:none;border:none;border-bottom:2px solid var(--bd);color:var(--dm);font-size:16px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tab:hover{color:var(--tx)}
+.tab.on{border-bottom-color:var(--ac);color:var(--ac);background:rgba(79,195,247,.05)}
 .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .mb{padding:12px 20px;border:2px solid var(--bd);border-radius:12px;background:var(--sl);color:var(--tx);font-size:16px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .mb:hover{border-color:var(--ac)}.mb.on{border-color:var(--ac);background:#2a4080;color:var(--ac)}
+.mb.off{opacity:.5}
 .sb{padding:16px 48px;border:none;border-radius:12px;background:var(--ac);color:#fff;font-size:18px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sb:hover{background:var(--ad)}.sb.off{opacity:.4;pointer-events:none}
 .go-wrap{width:100%;display:flex;justify-content:center}
@@ -24,7 +29,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .pbw{width:100%;height:6px;background:var(--sl);border-radius:3px;overflow:hidden}
 .pb{height:100%;background:var(--ac);transition:width .2s}
 .pt{font-size:14px;color:var(--dm)}
-.chr{font-size:min(180px,28vh);font-weight:700;line-height:1.1;min-height:28vh;display:flex;align-items:center;justify-content:center}
+.row{display:flex;align-items:center;gap:14px;width:100%;max-width:480px;margin:0 auto}
+.chr{flex:1;font-size:min(170px,28vh);font-weight:700;line-height:1.1;min-height:28vh;display:flex;align-items:center;justify-content:center}
+.lsb{width:52px;height:52px;border-radius:50%;border:2px solid var(--bd);background:var(--sl);color:var(--tx);font-size:22px;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:all .15s}
+.lsb:hover{border-color:var(--ac);background:#2a4080;color:var(--ac)}
+.lsb:active{background:#2a4080}
+.lsb.off{display:none}
 .iw{width:85%;max-width:360px}
 .inp{width:100%;padding:14px 20px;border:2px solid var(--bd);border-radius:12px;background:var(--sl);color:var(--tx);font-size:20px;text-align:center;outline:none;-webkit-appearance:none;font-family:inherit}
 .inp::placeholder{color:var(--dm)}.inp:focus{border-color:var(--ac)}
@@ -64,11 +74,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <!-- Mode Select -->
 <div id="modeScr" class="scr">
-  <div class="ttl">仮名練習</div>
-  <div class="hint">Kana Practice</div>
-  <div class="btns" id="modeBtns"></div>
-  <div id="mwHint" class="hint" style="text-align:center;line-height:1.5"></div>
-  <div class="go-wrap"><button class="sb off" id="goBtn">Start</button></div>
+  <div class="ttl" id="ttl">Kana &amp; Hangul Practice</div>
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-lang="jp">Japanese</button>
+    <button class="tab" data-lang="kr">Korean</button>
+  </div>
+  <div id="jpPane">
+    <div class="btns" id="jpBtns"></div>
+    <div class="go-wrap" style="margin-top:16px"><button class="sb go off" data-lang="jp">Start</button></div>
+  </div>
+  <div id="krPane" class="hidden">
+    <div class="btns" id="krBtns"></div>
+    <div class="go-wrap" style="margin-top:16px"><button class="sb go off" data-lang="kr">Start</button></div>
+  </div>
 </div>
 
 <!-- Practice -->
@@ -76,7 +94,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="bc"><button class="bb" id="bmenu">← Menu</button></div>
   <div class="pbw"><div class="pb" id="pb"></div></div>
   <div class="pt" id="pt">0 / 0</div>
-  <div class="chr" id="chr"></div>
+  <div class="row">
+    <div class="chr" id="chr"></div>
+    <button class="lsb off" id="lsb" aria-label="Listen">🔊</button>
+  </div>
   <div class="iw"><input type="text" class="inp" id="inp" placeholder="type romaji" autocomplete="off" autocorrect="off" enterkeyhint="go"></div>
   <div class="hint" style="opacity:.4">Space / Enter to submit</div>
   <button class="rbg" id="rbg">Wrong: <b id="wc">0</b> — tap to review</button>
@@ -98,7 +119,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <!-- Single Retry Overlay -->
 <div id="retryOv" class="ov">
   <div class="ot">Retry</div>
-  <div class="chr" id="rChr" style="font-size:min(140px,22vh);min-height:22vh"></div>
+  <div class="row" style="max-width:380px">
+    <div class="chr" id="rChr" style="font-size:min(140px,22vh);min-height:22vh"></div>
+    <button class="lsb" id="rLsb" aria-label="Listen">🔊</button>
+  </div>
   <div class="iw"><input type="text" class="inp" id="rInp" placeholder="type romaji" autocomplete="off" autocorrect="off" enterkeyhint="go"></div>
   <div class="hint" style="margin-top:6px;opacity:.4">Space / Enter to submit</div>
   <div class="ao" style="margin-top:12px">
@@ -117,58 +141,145 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <script>
-// ──────────── DATA ────────────
-// K: map char → {c, r (romaji), s (1=hiragana, 0=katakana), p (priority for sort order)}
+// ──────────── DATA SCHEMA ────────────
+// K: map char → {c (char), r (accept list), s (legacy 1=hira 0=kata, 2=kr),
+//               p (priority for sort), g (group: 'h'|'k'|'c'|'v'|'s'|'x'),
+//               sp (spoken text for TTS; only for kr), lang ('jp'|'kr')}
 const K={};
-(()=>{let p=0;const add=(c,r,s)=>{const rs=Array.isArray(r)?r:[r];K[c]={c,r:rs,s,p:p++}};
+let p=0;
+function add(c,r,s,g='x',sp=null,lang='jp'){
+  const rs=Array.isArray(r)?r:[r];
+  K[c]={c,r:rs,s,p:p++,g,sp,lang};
+}
 // a-row
-add('あ','a',1);add('ア','a',0);add('い','i',1);add('イ','i',0);
-add('う','u',1);add('ウ','u',0);add('え','e',1);add('エ','e',0);add('お','o',1);add('オ','o',0);
-// ka-row
-add('か','ka',1);add('カ','ka',0);add('が','ga',1);add('ガ','ga',0);
-add('き','ki',1);add('キ','ki',0);add('ぎ','gi',1);add('ギ','gi',0);
-add('く','ku',1);add('ク','ku',0);add('ぐ','gu',1);add('グ','gu',0);
-add('け','ke',1);add('ケ','ke',0);add('げ','ge',1);add('ゲ','ge',0);
-add('こ','ko',1);add('コ','ko',0);add('ご','go',1);add('ゴ','go',0);
-// sa-row
-add('さ','sa',1);add('サ','sa',0);add('ざ','za',1);add('ザ','za',0);
-add('し','shi',1);add('シ','shi',0);add('じ','ji',1);add('ジ','ji',0);
-add('す','su',1);add('ス','su',0);add('ず','zu',1);add('ズ','zu',0);
-add('せ','se',1);add('セ','se',0);add('ぜ','ze',1);add('ゼ','ze',0);
-add('そ','so',1);add('ソ','so',0);add('ぞ','zo',1);add('ゾ','zo',0);
-// ta-row
-add('た','ta',1);add('タ','ta',0);add('だ','da',1);add('ダ','da',0);
-add('ち','chi',1);add('チ','chi',0);add('ぢ',['ji','zi'],1);add('ヂ',['ji','zi'],0);
-add('つ','tsu',1);add('ツ','tsu',0);add('づ','zu',1);add('ヅ','zu',0);
-add('て','te',1);add('テ','te',0);add('で','de',1);add('デ','de',0);
-add('と','to',1);add('ト','to',0);add('ど','do',1);add('ド','do',0);
-// na-row
-add('な','na',1);add('ナ','na',0);add('に','ni',1);add('ニ','ni',0);
-add('ぬ','nu',1);add('ヌ','nu',0);add('ね','ne',1);add('ネ','ne',0);add('の','no',1);add('ノ','no',0);
-// ha-row
-add('は','ha',1);add('ハ','ha',0);add('ば','ba',1);add('バ','ba',0);add('ぱ','pa',1);add('パ','pa',0);
-add('ひ','hi',1);add('ヒ','hi',0);add('び','bi',1);add('ビ','bi',0);add('ぴ','pi',1);add('ピ','pi',0);
-add('ふ','fu',1);add('フ','fu',0);add('ぶ','bu',1);add('ブ','bu',0);add('ぷ','pu',1);add('プ','pu',0);
-add('へ','he',1);add('ヘ','he',0);add('べ','be',1);add('ベ','be',0);
-add('ほ','ho',1);add('ホ','ho',0);add('ぼ','bo',1);add('ボ','bo',0);add('ぽ','po',1);add('ポ','po',0);
-// ma-row
-add('ま','ma',1);add('マ','ma',0);add('み','mi',1);add('ミ','mi',0);
-add('む','mu',1);add('ム','mu',0);add('め','me',1);add('メ','me',0);add('も','mo',1);add('モ','mo',0);
-// ya-row
-add('や','ya',1);add('ヤ','ya',0);add('ゆ','yu',1);add('ユ','yu',0);add('よ','yo',1);add('ヨ','yo',0);
-// ra-row
-add('ら','ra',1);add('ラ','ra',0);add('り','ri',1);add('リ','ri',0);
-add('る','ru',1);add('ル','ru',0);add('れ','re',1);add('レ','re',0);add('ろ','ro',1);add('ロ','ro',0);
-// wo-row
-add('わ','wa',1);add('ワ','wa',0);add('を','wo',1);add('ヲ','wo',0);add('ん','n',1);add('ン','n',0);
+// ── KANA ──
+(()=>{
+  add('あ','a',1);add('ア','a',0);add('い','i',1);add('イ','i',0);
+  add('う','u',1);add('ウ','u',0);add('え','e',1);add('エ','e',0);add('お','o',1);add('オ','o',0);
+  // ka-row
+  add('か','ka',1);add('カ','ka',0);add('が','ga',1);add('ガ','ga',0);
+  add('き','ki',1);add('キ','ki',0);add('ぎ','gi',1);add('ギ','gi',0);
+  add('く','ku',1);add('ク','ku',0);add('ぐ','gu',1);add('グ','gu',0);
+  add('け','ke',1);add('ケ','ke',0);add('げ','ge',1);add('ゲ','ge',0);
+  add('こ','ko',1);add('コ','ko',0);add('ご','go',1);add('ゴ','go',0);
+  // sa-row
+  add('さ','sa',1);add('サ','sa',0);add('ざ','za',1);add('ザ','za',0);
+  add('し','shi',1);add('シ','shi',0);add('じ','ji',1);add('ジ','ji',0);
+  add('す','su',1);add('ス','su',0);add('ず','zu',1);add('ズ','zu',0);
+  add('せ','se',1);add('セ','se',0);add('ぜ','ze',1);add('ゼ','ze',0);
+  add('そ','so',1);add('ソ','so',0);add('ぞ','zo',1);add('ゾ','zo',0);
+  // ta-row
+  add('た','ta',1);add('タ','ta',0);add('だ','da',1);add('ダ','da',0);
+  add('ち','chi',1);add('チ','chi',0);add('ぢ',['ji','zi'],1);add('ヂ',['ji','zi'],0);
+  add('つ','tsu',1);add('ツ','tsu',0);add('づ','zu',1);add('ヅ','zu',0);
+  add('て','te',1);add('テ','te',0);add('で','de',1);add('デ','de',0);
+  add('と','to',1);add('ト','to',0);add('ど','do',1);add('ド','do',0);
+  // na-row
+  add('な','na',1);add('ナ','na',0);add('に','ni',1);add('ニ','ni',0);
+  add('ぬ','nu',1);add('ヌ','nu',0);add('ね','ne',1);add('ネ','ne',0);add('の','no',1);add('ノ','no',0);
+  // ha-row
+  add('は','ha',1);add('ハ','ha',0);add('ば','ba',1);add('バ','ba',0);add('ぱ','pa',1);add('パ','pa',0);
+  add('ひ','hi',1);add('ヒ','hi',0);add('び','bi',1);add('ビ','bi',0);add('ぴ','pi',1);add('ピ','pi',0);
+  add('ふ','fu',1);add('フ','fu',0);add('ぶ','bu',1);add('ブ','bu',0);add('ぷ','pu',1);add('プ','pu',0);
+  add('へ','he',1);add('ヘ','he',0);add('べ','be',1);add('ベ','be',0);
+  add('ほ','ho',1);add('ホ','ho',0);add('ぼ','bo',1);add('ボ','bo',0);add('ぽ','po',1);add('ポ','po',0);
+  // ma-row
+  add('ま','ma',1);add('マ','ma',0);add('み','mi',1);add('ミ','mi',0);
+  add('む','mu',1);add('ム','mu',0);add('め','me',1);add('メ','me',0);add('も','mo',1);add('モ','mo',0);
+  // ya-row
+  add('や','ya',1);add('ヤ','ya',0);add('ゆ','yu',1);add('ユ','yu',0);add('よ','yo',1);add('ヨ','yo',0);
+  // ra-row
+  add('ら','ra',1);add('ラ','ra',0);add('り','ri',1);add('リ','ri',0);
+  add('る','ru',1);add('ル','ru',0);add('れ','re',1);add('レ','re',0);add('ろ','ro',1);add('ロ','ro',0);
+  // wo-row
+  add('わ','wa',1);add('ワ','wa',0);add('を','wo',1);add('ヲ','wo',0);add('ん','n',1);add('ン','n',0);
+
 })();
+
+;
+// ── HANGUL ──
+(()=>{
+  // Consonant jamo (initial position) — accept by jamo NAME romanization
+  const CONS=[
+    ['ㄱ',['giyeok','g'],'기역','c'],
+    ['ㄴ',['nieun','n'],'니은','c'],
+    ['ㄷ',['digeut','d'],'디귿','c'],
+    ['ㄹ',['rieul','r','l'],'리을','c'],
+    ['ㅁ',['mieum','m'],'미음','c'],
+    ['ㅂ',['bieup','b'],'비읍','c'],
+    ['ㅅ',['siot','s','sh'],'시옷','c'],
+    ['ㅇ',['ieung','ng'],'이응','c'],
+    ['ㅈ',['jieut','z','j'],'지읒','c'],
+    ['ㅊ',['chieut','ch','c'],'치읓','c'],
+    ['ㅋ',['kieuk','k'],'키읔','c'],
+    ['ㅌ',['tieut','t'],'티읕','c'],
+    ['ㅍ',['pieut','p'],'피읖','c'],
+    ['ㅎ',['hieut','h'],'히읗','c'],
+  ];
+  CONS.forEach(([c,r,sp])=>add(c,r,2,'c',sp,'kr'));
+  // Vowel jamo — basic + double vowels; accept by the SOUND the vowel produces
+  const VOWELS=[
+    ['ㅏ',['a','ah'],'아'],
+    ['ㅑ',['ya'],'야'],
+    ['ㅓ',['eo'],'어'],
+    ['ㅕ',['yeo'],'여'],
+    ['ㅗ',['o','oh'],'오'],
+    ['ㅛ',['yo'],'요'],
+    ['ㅜ',['u','oo'],'우'],
+    ['ㅠ',['yu'],'유'],
+    ['ㅡ',['eu'],'으'],
+    ['ㅣ',['i'],'이'],
+    // Double vowels
+    ['ㅐ',['ae'],'애'],
+    ['ㅒ',['yae'],'얘'],
+    ['ㅔ',['e'],'에'],
+    ['ㅖ',['ye'],'예'],
+    ['ㅘ',['wa'],'와'],
+    ['ㅙ',['wae'],'왜'],
+    ['ㅚ',['oe'],'외'],
+    ['ㅝ',['wo'],'워'],
+    ['ㅞ',['we'],'웨'],
+    ['ㅟ',['wi'],'위'],
+    ['ㅢ',['ui'],'의'],
+  ];
+  VOWELS.forEach(([c,r,sp])=>add(c,r,2,'v',sp,'kr'));
+  // Syllables — full basic CV set: 10 initials × 10 basic vowels = 100,
+  // as composed Hangul codepoints (U+AC00 block).
+  // Accepted answer = Revised-Romanization base of initial + vowel
+  // (ㄹ-row accepts both r- and l- spellings).
+  const SYL=[
+    ['가',['ga']], ['갸',['gya']], ['거',['geo']], ['겨',['gyeo']], ['고',['go']],
+    ['교',['gyo']], ['구',['gu']], ['규',['gyu']], ['그',['geu']], ['기',['gi']],
+    ['나',['na']], ['냐',['nya']], ['너',['neo']], ['녀',['nyeo']], ['노',['no']],
+    ['뇨',['nyo']], ['누',['nu']], ['뉴',['nyu']], ['느',['neu']], ['니',['ni']],
+    ['다',['da']], ['댜',['dya']], ['더',['deo']], ['뎌',['dyeo']], ['도',['do']],
+    ['됴',['dyo']], ['두',['du']], ['듀',['dyu']], ['드',['deu']], ['디',['di']],
+    ['라',['ra','la']], ['랴',['rya','lya']], ['러',['reo','leo']], ['려',['ryeo','lyeo']],
+    ['로',['ro','lo']], ['료',['ryo','lyo']], ['루',['ru','lu']], ['류',['ryu','lyu']],
+    ['르',['reu','leu']], ['리',['ri','li']],
+    ['마',['ma']], ['먀',['mya']], ['머',['meo']], ['며',['myeo']], ['모',['mo']],
+    ['묘',['myo']], ['무',['mu']], ['뮤',['myu']], ['므',['meu']], ['미',['mi']],
+    ['바',['ba']], ['뱌',['bya']], ['버',['beo']], ['벼',['byeo']], ['보',['bo']],
+    ['뵤',['byo']], ['부',['bu']], ['뷰',['byu']], ['브',['beu']], ['비',['bi']],
+    ['사',['sa']], ['샤',['sya']], ['서',['seo']], ['셔',['syeo']], ['소',['so']],
+    ['쇼',['syo']], ['수',['su']], ['슈',['syu']], ['스',['seu']], ['시',['si']],
+    ['아',['a']], ['야',['ya']], ['어',['eo']], ['여',['yeo']], ['오',['o']],
+    ['요',['yo']], ['우',['u']], ['유',['yu']], ['으',['eu']], ['이',['i']],
+    ['자',['ja']], ['쟈',['jya']], ['저',['jeo']], ['져',['jyeo']], ['조',['jo']],
+    ['죠',['jyo']], ['주',['ju']], ['쥬',['jyu']], ['즈',['jeu']], ['지',['ji']],
+    ['하',['ha']], ['햐',['hya']], ['허',['heo']], ['혀',['hyeo']], ['호',['ho']],
+    ['효',['hyo']], ['후',['hu']], ['휴',['hyu']], ['흐',['heu']], ['히',['hi']],
+  ];
+  SYL.forEach(([c,accents])=>add(c,accents,2,'s',c,'kr'));
+})()
 const ALL=Object.values(K);
 
 // ──────────── STATE ────────────
-let batch=[],idx=0,curMode=null;
+let batch=[],idx=0,curMode=null,curLang=null;
 let wrongSet=new Set(),wrongAns={};
 let streak=0,bestStreak=0;
 let submitting=false;
+let curTab='jp';
 
 // ──────────── HELPERS ────────────
 const $=id=>document.getElementById(id);
@@ -179,39 +290,72 @@ const isSubmitKey=e=>['Enter','Go'].includes(e.key)||['Enter','Space','Go'].incl
 const isSpaceKey=e=>e.key===' '||e.code==='Space';
 
 // ──────────── LOCAL STORAGE ────────────
-const KEY='kana_wrong';
+const KEY='syllabics_wrong';
 function getWrong(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return{}}}
 function setWrong(d){localStorage.setItem(KEY,JSON.stringify(d))}
 function recordWrong(char){const d=getWrong();const e=d[char]||{c:0,t:0};e.c++;e.t=Date.now();d[char]=e;setWrong(d);updateStats()}
-function getTopWrong(limit){const d=getWrong();return Object.entries(d).filter(([,v])=>v.c>=3).sort((a,b)=>b[1].c-a[1].c||b[1].t-a[1].t).slice(0,limit).map(([c])=>K[c]).filter(Boolean).sort((a,b)=>a.p-b.p)}
+function getTopWrong(limit,lang){
+  const d=getWrong();
+  return Object.entries(d)
+    .filter(([c,v])=>K[c]&&v.c>=3&&(lang?K[c].lang===lang:true))
+    .sort((a,b)=>b[1].c-a[1].c||b[1].t-a[1].t)
+    .slice(0,limit)
+    .map(([c])=>K[c])
+    .filter(Boolean)
+    .sort((a,b)=>{const gA=a.g||'x',gB=b.g||'x';const order={'h':0,'k':1,'c':2,'v':3,'s':4,'x':5};if(gA!==gB)return (order[gA]??99)-(order[gB]??99);return a.p-b.p;});
+}
 
 // ──────────── BATCH LOGIC ────────────
 function buildBatch(m){
   let arr;
-  if(m==='h')arr=ALL.filter(k=>k.s===1);
-  else if(m==='k')arr=ALL.filter(k=>k.s===0);
-  else if(m==='mw')arr=getTopWrong(20);
-  else arr=[...ALL];
+  if(m==='h')arr=ALL.filter(k=>k.g==='x'&&k.s===1);
+  else if(m==='k')arr=ALL.filter(k=>k.g==='x'&&k.s===0);
+  else if(m==='b')arr=ALL.filter(k=>k.g==='x');            // all kana (hiragana + katakana)
+  else if(m==='c')arr=ALL.filter(k=>k.g==='c');
+  else if(m==='v')arr=ALL.filter(k=>k.g==='v');
+  else if(m==='s')arr=ALL.filter(k=>k.g==='s');
+  else if(m==='mw')arr=getTopWrong(20,curLang);
+  else arr=[];
   return shuffle(arr);
 }
 
 function startPractice(m){
   const arr=buildBatch(m);
   if(!arr.length){
-    alert(m==='mw'?'Not enough mistakes yet. Need at least 3 wrong answers per character to appear here.':'');
+    if(m==='mw')alert('Nothing selected yet. A character is added to Most Wrong after 3 wrong answers.');
+    else alert('No characters for this mode.');
     return;
   }
-  curMode=m;batch=arr;idx=0;wrongSet=new Set();wrongAns={};streak=0;bestStreak=0;
+  curMode=m;curLang=(K[arr[0]]||{}).lang;
+  batch=arr;idx=0;wrongSet=new Set();wrongAns={};streak=0;bestStreak=0;
   $('modeScr').classList.add('hidden');$('prScr').classList.remove('hidden');
   $('doneScr').classList.remove('on');$('revOv').classList.remove('on');$('retryOv').classList.remove('on');
   showChar();
 }
 
 // ──────────── PRACTICE ────────────
+// Listen = "stuck helper": speak the Korean name / sound / syllable of the shown char.
+//   Uses the `sp` field (Korean text). Voice = Korean (ko-KR); if none is
+//   installed the browser decides (may be an accented default or silence).
+function speak(k){
+  if(!k)return;
+  if(!('speechSynthesis' in window))return;
+  const text=k.sp||k.c;
+  const u=new SpeechSynthesisUtterance(text);
+  u.rate=0.7;u.pitch=1;
+  u.lang='ko-KR';
+  const voices=speechSynthesis.getVoices();
+  const ko=voices.find(v=>v.lang&&v.lang.toLowerCase().startsWith('ko'));
+  if(ko)u.voice=ko;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
 function showChar(){
   if(idx>=batch.length){finishBatch();return}
   const k=batch[idx];
   $('chr').textContent=k.c;$('chr').className='chr';
+  $('lsb').classList.toggle('off',!(k&&k.lang==='kr'));
   const inp=$('inp');inp.value='';inp.className='inp';inp.focus();
   updateProg();updateBadge();
 }
@@ -237,6 +381,7 @@ function submit(){
 }
 
 $('inp').addEventListener('keydown',e=>{if(isSpaceKey(e)||isSubmitKey(e)){e.preventDefault();submit()}});
+$('lsb').addEventListener('click',()=>{const k=batch[idx];if(k)speak(k)});
 
 // ──────────── REVIEW ────────────
 function openReview(){
@@ -259,6 +404,7 @@ function openReview(){
 function openRetry(char){
   const k=K[char];if(!k)return;
   $('rChr').textContent=k.c;$('rChr').className='chr';
+  PLACEHOLDER
   const inp=$('rInp');inp.value='';inp.className='inp';
   $('retryOv').classList.add('on');
   setTimeout(()=>inp.focus(),80);
@@ -294,7 +440,7 @@ $('newBatchBtn').addEventListener('click',startBatch);
 $('doneNew').addEventListener('click',startBatch);
 $('doneOk').addEventListener('click',()=>{
   $('doneScr').classList.remove('on');$('prScr').classList.add('hidden');
-  $('modeScr').classList.remove('hidden');updateMwHint();
+  $('modeScr').classList.remove('hidden');
 });
 
 function startBatch(){$('doneScr').classList.remove('on');startPractice(curMode)}
@@ -320,7 +466,7 @@ function updateStats(){
   }
   el.appendChild(mk('Best streak (session)',bestStreak));
   const btn=document.createElement('button');btn.className='cb';btn.textContent='Reset all data';
-  btn.addEventListener('click',()=>{if(confirm('Reset all mistake data?')){localStorage.removeItem(KEY);updateStats();updateMwHint()}});
+  btn.addEventListener('click',()=>{if(confirm('Reset all mistake data?')){localStorage.removeItem(KEY);updateStats()}});
   el.appendChild(btn);
 }
 
@@ -335,7 +481,6 @@ function exitPractice(){
   $('doneScr').classList.remove('on');$('revOv').classList.remove('on');$('retryOv').classList.remove('on');
   $('prScr').classList.add('hidden');$('modeScr').classList.remove('hidden');
   batch=[];idx=0;streak=0;bestStreak=0;
-  updateMwHint();
 }
 $('bmenu').addEventListener('click',()=>{
   if(!practiceActive()){exitPractice();return}
@@ -346,31 +491,69 @@ window.addEventListener('beforeunload',e=>{
   e.preventDefault();e.returnValue='';
 });
 
-// ──────────── MODE UI ────────────
-function updateMwHint(){
-  const n=getTopWrong(20).length;
-  const el=$('mwHint');
-  if(n)el.textContent=(n===1?'1 char':n+' chars')+' available in Most Wrong mode';
-  else el.textContent='Need 3+ wrong answers per char to use Most Wrong mode';
+// ──────────── TAB / MODE UI ────────────
+const JP_MODES=[
+  {id:'h',label:'Hiragana'},
+  {id:'k',label:'Katakana'},
+  {id:'b',label:'Both'},
+  {id:'mw',label:'Most Wrong'},
+];
+const KR_MODES=[
+  {id:'c',label:'Consonants'},
+  {id:'v',label:'Vowels'},
+  {id:'s',label:'Syllables'},
+  {id:'mw',label:'Most Wrong'},
+];
+
+function buildModeBtns(container,modes,lang){
+  container.innerHTML='';
+  modes.forEach(m=>{
+    const btn=document.createElement('button');
+    btn.className='mb';btn.textContent=m.label;
+    btn.dataset.mode=m.id;btn.dataset.lang=lang;
+    btn.addEventListener('click',()=>{
+      [...container.children].forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      const go=container.parentElement.querySelector('.go');
+      if(go)go.classList.remove('off');
+    });
+    container.appendChild(btn);
+  });
 }
 
-const MBS=$('modeBtns');
-['h','k','b','mw'].forEach((id,i)=>{
-  const labels={h:'Hiragana',k:'Katakana',b:'Both',mw:'Most Wrong'};
-  const btn=document.createElement('button');btn.className='mb';btn.textContent=labels[id];btn.dataset.mode=id;
-  btn.addEventListener('click',()=>{
-    [...MBS.children].forEach(b=>b.classList.remove('on'));
-    btn.classList.add('on');$('goBtn').classList.remove('off');
+buildModeBtns($('jpBtns'),JP_MODES,'jp');
+buildModeBtns($('krBtns'),KR_MODES,'kr');
+
+$('tabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab');if(!t)return;
+  const lang=t.dataset.lang;
+  curTab=lang;
+  [...$('tabs').children].forEach(x=>x.classList.toggle('on',x===t));
+  $('jpPane').classList.toggle('hidden',lang!=='jp');
+  $('krPane').classList.toggle('hidden',lang!=='kr');
+});
+
+document.querySelectorAll('.go').forEach(go=>{
+  go.addEventListener('click',()=>{
+    const lang=go.dataset.lang;
+    const pane=lang==='jp'?$('jpPane'):$('krPane');
+    const on=pane.querySelector('.mb.on');
+    if(!on){
+      pane.querySelector('.btns').animate(
+        [{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],
+        {duration:300}
+      );
+      return;
+    }
+    curLang=lang;
+    startPractice(on.dataset.mode);
   });
-  MBS.appendChild(btn);
 });
 
-$('goBtn').addEventListener('click',()=>{
-  const btn=document.querySelector('.mb.on');
-  if(btn)startPractice(btn.dataset.mode);
-});
-
-updateMwHint();
+if ('speechSynthesis' in window) {
+  const _ = speechSynthesis.getVoices();
+  speechSynthesis.addEventListener('voiceschanged', ()=>speechSynthesis.getVoices());
+}
 </script>
 </body>
 </html>
