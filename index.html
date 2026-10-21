@@ -69,6 +69,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .wsec .lst .mc{cursor:pointer}
 .wsec .lst .mc:hover{border-color:var(--ac)}
 .wsec .none{font-size:12px;color:var(--dm)}
+.rfc{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:52px;padding:4px 8px;background:var(--sl);border:1px solid var(--bd);border-radius:6px;cursor:default}
+.rfc b{font-size:18px;font-weight:700;color:var(--tx)}
+.rfc span{font-size:11px;color:var(--dm)}
+.rfc.kr{cursor:pointer}.rfc.kr:hover{border-color:var(--ac)}
 .ov{position:fixed;inset:0;background:rgba(10,10,20,.95);z-index:100;display:none;flex-direction:column;padding:16px;overflow-y:auto}
 .ov.on{display:flex}
 .ot{font-size:16px;color:var(--dm);margin-bottom:12px;text-align:center}
@@ -115,6 +119,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div id="wlist" style="display:flex;flex-direction:column;gap:12px"></div>
     <button class="cb" id="wreset" style="align-self:center">Reset all data</button>
   </div>
+  <button class="wcb" id="rfb">📖 Reference</button>
+  <div class="wp" id="rfp"></div>
 </div>
 
 <!-- Practice -->
@@ -696,6 +702,34 @@ function buildModeBtns(container,modes,lang){
 buildModeBtns($('jpBtns'),JP_MODES,'jp');
 buildModeBtns($('krBtns'),KR_MODES,'kr');
 
+// ──────────── REFERENCE ────────────
+function renderReference(){
+  const box=$('rfp');box.innerHTML='';
+  const all=Object.values(K).filter(k=>k.lang===curTab);
+  const secs=curTab==='jp'
+    ?[['Hiragana',k=>k.s===1],['Katakana',k=>k.s===0]]
+    :[['Consonants',k=>k.g==='c'],['Vowels',k=>k.g==='v'],['Syllables',k=>k.g==='s']];
+  secs.forEach(([title,fn])=>{
+    const items=all.filter(fn);
+    if(!items.length)return;
+    const sec=document.createElement('div');sec.className='wsec';
+    const sl=document.createElement('div');sl.className='sl';sl.textContent=`${title} (${items.length})`;sec.appendChild(sl);
+    const lst=document.createElement('div');lst.className='lst';
+    items.forEach(k=>{
+      const c=document.createElement('div');c.className='rfc'+(curTab==='kr'?' kr':'');
+      const b=document.createElement('b');b.textContent=k.c;
+      const a=document.createElement('span');a.textContent=k.r.join(' / ');
+      c.appendChild(b);c.appendChild(a);
+      if(curTab==='kr')c.addEventListener('click',()=>speak(k));
+      lst.appendChild(c);
+    });
+    sec.appendChild(lst);box.appendChild(sec);
+  });
+}
+$('rfb').addEventListener('click',()=>{
+  const p=$('rfp');p.classList.toggle('on');
+  if(p.classList.contains('on'))renderReference();
+});
 $('tabs').addEventListener('click',e=>{
   const t=e.target.closest('.tab');if(!t)return;
   const lang=t.dataset.lang;
@@ -704,6 +738,7 @@ $('tabs').addEventListener('click',e=>{
   $('jpPane').classList.toggle('hidden',lang!=='jp');
   $('krPane').classList.toggle('hidden',lang!=='kr');
   // Reset "on" states to avoid double "on"
+  if($('rfp').classList.contains('on'))renderReference();
 });
 
 document.querySelectorAll('.go').forEach(go=>{
