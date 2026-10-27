@@ -69,6 +69,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .wsec .lst .mc{cursor:pointer}
 .wsec .lst .mc:hover{border-color:var(--ac)}
 .wsec .none{font-size:12px;color:var(--dm)}
+.cb.sy{background:var(--sl);border-color:var(--bd);color:var(--dm)}
+.cb.sy.on{border-color:var(--ac);color:var(--ac)}
+.syst{font-size:12px;color:var(--dm);text-align:center}
 .rfc{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:52px;padding:4px 8px;background:var(--sl);border:1px solid var(--bd);border-radius:6px;cursor:default}
 .rfc b{font-size:18px;font-weight:700;color:var(--tx)}
 .rfc span{font-size:11px;color:var(--dm)}
@@ -117,6 +120,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button data-view="last">Last session</button>
     </div>
     <div id="wlist" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <button class="cb sy" id="syncBtn">Sync: off</button>
+      <div class="syst" id="syncSt"></div>
+    </div>
     <button class="cb" id="wreset" style="align-self:center">Reset all data</button>
   </div>
   <button class="wcb" id="rfb">📖 Reference</button>
@@ -336,11 +343,11 @@ const LAST_KEY='syllabics_last_session';
 function getWrong(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return{}}}
 function setWrong(d){localStorage.setItem(KEY,JSON.stringify(d))}
 // e = {c (all-time miss count), t (last miss), w (Most-Wrong weight; w-1 on first-try correct)}
-function recordWrong(char){const d=getWrong();const e=d[char]||{c:0,t:0};e.c++;e.w=(e.w!=null?e.w:e.c-1)+1;e.t=Date.now();d[char]=e;setWrong(d);sessionWrong[char]=(sessionWrong[char]||0)+1;updateStats()}
-function recordCorrect(char){const d=getWrong();const e=d[char];if(!e)return;e.w=Math.max(0,(e.w!=null?e.w:e.c)-1);setWrong(d)}
+function recordWrong(char){const d=getWrong();const e=d[char]||{c:0,t:0};e.c++;e.w=(e.w!=null?e.w:e.c-1)+1;e.t=Date.now();d[char]=e;setWrong(d);sessionWrong[char]=(sessionWrong[char]||0)+1;updateStats();schedulePush()}
+function recordCorrect(char){const d=getWrong();const e=d[char];if(!e)return;e.w=Math.max(0,(e.w!=null?e.w:e.c)-1);setWrong(d);schedulePush()}
 function getLastSession(){try{return JSON.parse(localStorage.getItem(LAST_KEY))||null}catch{return null}}
 function setLastSession(d){localStorage.setItem(LAST_KEY,JSON.stringify(d))}
-function snapshotSession(){setLastSession(sessionWrong);lastSession={...sessionWrong}}
+function snapshotSession(){setLastSession(sessionWrong);lastSession={...sessionWrong};const s=getSync();s.lastAt=Date.now();setSync(s);schedulePush()}
 function topWrongInfo(limit,lang){
   const W=e=>e.w!=null?e.w:e.c;              // old entries (no w) fall back to c
   const d=getWrong();
@@ -579,6 +586,82 @@ $('stb').addEventListener('click',()=>{
   if(sp.classList.contains('on'))updateStats();
 });
 
+// ──────────── OPTIONAL SYNC ────────────
+// Off by default. When on, localStorage stays the working copy and is merged with a server
+// copy through api/data (relative to this page). The merge rules match server/server.py.
+const SYNC_KEY='syllabics_sync';   // {on, lastAt (last-session time), resetAt (time of last reset)}
+function getSync(){try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{}}catch{return{}}}
+function setSync(o){localStorage.setItem(SYNC_KEY,JSON.stringify(o))}
+function localData(){const s=getSync();return {wrong:getWrong(),last:getLastSession(),lastAt:s.lastAt||0,resetAt:s.resetAt||0}}
+function mergeData(a,b){
+  const reset=Math.max(a.resetAt,b.resetAt);
+  const W=e=>e.w!=null?e.w:e.c;
+  const wrong={};
+  new Set([...Object.keys(a.wrong),...Object.keys(b.wrong)]).forEach(ch=>{
+    const es=[a,b].map(d=>d.wrong[ch]).filter(e=>e&&e.t>=reset);
+    if(!es.length)return;
+    const t=Math.max(...es.map(e=>e.t));
+    wrong[ch]={c:Math.max(...es.map(e=>e.c)),t,w:Math.min(...es.filter(e=>e.t===t).map(W))};
+  });
+  const src=b.lastAt>a.lastAt?b:a;
+  return {wrong,last:src.lastAt>=reset?src.last:null,lastAt:Math.max(a.lastAt,b.lastAt),resetAt:reset};
+}
+function applyData(d){
+  setWrong(d.wrong);
+  if(d.last)setLastSession(d.last);else localStorage.removeItem(LAST_KEY);
+  lastSession=d.last?{...d.last}:null;
+  const s=getSync();s.lastAt=d.lastAt;s.resetAt=d.resetAt;setSync(s);
+  updateHints();
+  if($('wp').classList.contains('on'))renderWrongList();
+}
+let syncStatus='off',syncTimer=null,syncBusy=false,syncAgain=false,syncDirty=false;
+function renderSyncUI(){
+  const on=!!getSync().on;
+  const b=$('syncBtn');b.textContent=on?'Sync: on':'Sync: off';b.classList.toggle('on',on);
+  $('syncSt').textContent=on?{busy:'Syncing\u2026',ok:'Synced.',offline:'Server unreachable. Will retry.',
+    login:'Login required.',nosrv:'No sync server found.',error:'The server rejected the data.'}[syncStatus]||'':'Data stays on this device.';
+}
+function schedulePush(){
+  if(!getSync().on)return;
+  syncDirty=true;
+  clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(),1500);
+}
+async function syncNow(keepalive){
+  if(!getSync().on)return;
+  clearTimeout(syncTimer);
+  if(syncBusy){syncAgain=true;return}
+  syncBusy=true;syncDirty=false;syncStatus='busy';renderSyncUI();
+  let r=null;
+  try{
+    r=await fetch('api/data',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(localData()),keepalive:!!keepalive});
+  }catch{syncStatus='offline'}
+  if(r){
+    if(r.status===401||r.status===403)syncStatus='login';
+    else if([404,405,501].includes(r.status))syncStatus='nosrv';
+    else if(!r.ok)syncStatus='error';
+    else{
+      try{
+        const d=await r.json();
+        // merge again with the current local data: answers recorded while the request was in flight survive
+        if(getSync().on){applyData(mergeData(localData(),d));syncStatus='ok'}
+      }catch{syncStatus='error'}
+    }
+  }
+  syncBusy=false;renderSyncUI();
+  if(syncAgain){syncAgain=false;schedulePush()}
+}
+$('syncBtn').addEventListener('click',()=>{
+  const s=getSync();s.on=!s.on;setSync(s);
+  if(s.on)syncNow();else{clearTimeout(syncTimer);syncDirty=false}
+  renderSyncUI();
+});
+document.addEventListener('visibilitychange',()=>{
+  if(!getSync().on)return;
+  if(document.visibilityState==='hidden'){if(syncDirty)syncNow(true)}
+  else syncNow();
+});
+window.addEventListener('online',()=>syncNow());
+
 // ──────────── WRONG CHARS (menu) ────────────
 let wrongView='all';
 function renderWrongList(){
@@ -612,9 +695,12 @@ $('wcb').addEventListener('click',()=>{
 });
 $('wseg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setWrongView(b.dataset.view)});
 $('wreset').addEventListener('click',()=>{
-  if(!confirm('Reset all mistake data (all-time)?'))return;
+  const on=!!getSync().on;
+  if(!confirm(on?'Reset all mistake data (all-time) here and on the sync server?':'Reset all mistake data (all-time)?'))return;
   localStorage.removeItem(KEY);localStorage.removeItem(LAST_KEY);
+  if(on){const s=getSync();s.resetAt=Date.now();s.lastAt=0;setSync(s)}
   lastSession=null;updateHints();renderWrongList();
+  if(on)syncNow();
 });
 
 // ──────────── BACK / EXIT ────────────
@@ -761,6 +847,8 @@ document.querySelectorAll('.go').forEach(go=>{
 });
 
 updateHints();
+renderSyncUI();
+if(getSync().on)syncNow();
 if ('speechSynthesis' in window) {
   const _ = speechSynthesis.getVoices();
   speechSynthesis.addEventListener('voiceschanged', ()=>speechSynthesis.getVoices());
